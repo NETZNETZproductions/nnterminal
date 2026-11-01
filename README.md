@@ -4,7 +4,7 @@
 
 **A clean, dark SSH terminal with a live server dashboard, a real local shell and a built-in Linux command reference.**
 
-![Version](https://img.shields.io/badge/version-1.1.0-9b8cff)
+![Version](https://img.shields.io/badge/version-1.3.0-9b8cff)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-52c58a)
 ![Built with](https://img.shields.io/badge/built%20with-Electron-e5b23a)
 
