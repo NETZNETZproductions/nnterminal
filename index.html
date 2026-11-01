@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NNTerminal – SSH terminal and server management for Windows</title>
+<meta name="description" content="NNTerminal combines SSH terminals, local shells, an SFTP file browser, server monitoring, an AI assistant and end-to-end encrypted cloud sync in one Windows app.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' rx='4' fill='%239b8cff'/%3E%3Cpath d='M5 6l4 4-4 4' fill='none' stroke='%2314102b' stroke-width='2'/%3E%3Cpath d='M11 14h4' stroke='%2314102b' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #0d0e12;
+  --bar: #090a0d;
+  --surface: #14161c;
+  --line: #23252e;
+  --ink: #e4e6ee;
+  --muted: #8b8fa0;
+  --accent: #9b8cff;
+  --green: #52c58a;
+  --amber: #e5b23a;
+  --red: #ef6a6a;
+  --ui: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+html, body { height: 100%; margin: 0; }
+body { display: grid; grid-template-rows: auto 1fr; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--ui); font-variant-numeric: tabular-nums; color-scheme: dark; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+a:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code { font: 12px var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; }
+
+/* Titlebar + sidebar */
+#top { height: 42px; display: flex; align-items: center; gap: 10px; background: var(--bar); border-bottom: 1px solid var(--line); user-select: none; }
+#logo { width: 20px; height: 20px; flex: none; margin-left: 14px; }
+#appname { font: 600 13px var(--ui); color: var(--muted); }
+#top .spacer { flex: 1; }
+#top .btn { padding: 3px 12px; font-size: 12px; margin-right: 12px; }
+#app { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 0; }
+#tabs { display: flex; flex-direction: column; gap: 2px; padding: 12px 8px; background: var(--bar); border-right: 1px solid var(--line); overflow-y: auto; min-height: 0; }
+.tab { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 12px; border-left: 2px solid transparent; border-radius: 4px; color: var(--muted); font: 500 13px var(--ui); }
+.tab:hover { color: var(--ink); background: var(--surface); text-decoration: none; }
+.tab.on { background: var(--surface); color: var(--ink); border-left-color: var(--accent); }
+.tab.sep { margin-top: 10px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; display: inline-block; }
+.dot.accent { background: var(--accent); }
+.dot.online { background: var(--green); }
+#tabs .grow { flex: 1; min-height: 12px; }
+#tabs .ver { padding: 8px 12px; color: var(--muted); font: 12px var(--mono); }
+
+/* Buttons */
+.btn { display: inline-block; background: var(--accent); color: #14102b; border: 0; border-radius: 4px; padding: 8px 18px; font: 600 13px var(--ui); cursor: pointer; }
+.btn:hover { filter: brightness(1.1); text-decoration: none; }
+.btn.ghost { background: none; color: var(--ink); border: 1px solid var(--line); }
+.btn.ghost:hover { border-color: var(--muted); filter: none; }
+
+/* Content */
+main { overflow: auto; min-width: 0; padding: 32px 40px 56px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+section { margin-bottom: 52px; }
+.dhead { margin-bottom: 20px; }
+h1 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -.01em; }
+h2 { margin: 0; font-size: 22px; font-weight: 600; }
+h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.lead { max-width: 64ch; margin: 14px 0 22px; font-size: 15px; line-height: 1.6; color: var(--ink); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.note { max-width: 70ch; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+.totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
+.tcard, .card { padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.tcard .st-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+.tcard b { font: 400 26px var(--mono); color: var(--ink); }
+.tcard small { display: block; margin-top: 10px; color: var(--muted); font-size: 12px; }
+.seg { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; height: 8px; }
+.seg i { background: var(--line); border-radius: 1px; }
+.seg i.on { background: var(--accent); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { display: flex; flex-direction: column; gap: 10px; }
+.card h3 { display: flex; align-items: center; gap: 12px; margin: 0; }
+.card ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.card li { margin-bottom: 4px; }
+.card li b { color: var(--ink); font-weight: 500; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 14px; }
+.dl .card { gap: 14px; }
+.dl .fn { font: 13px var(--mono); overflow-wrap: anywhere; }
+
+.rel { position: relative; display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 20px; padding: 18px 0; border-top: 1px solid var(--line); }
+.rel:last-child { border-bottom: 1px solid var(--line); }
+.rel .v { font: 600 15px var(--mono); }
+.rel .v small { display: block; margin-top: 2px; color: var(--muted); font: 12px var(--ui); }
+.rel .v.cur { color: var(--accent); }
+.rel h3 { margin-bottom: 6px; }
+.rel ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.rel li { margin-bottom: 3px; }
+.rel li b { color: var(--ink); font-weight: 500; }
+.warn { margin: 0 0 12px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--accent); border-radius: 6px; font-size: 13px; }
+.warn.amber { border-color: #5a4a1c; }
+
+footer { padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.6; max-width: 80ch; }
+footer p { margin: 0 0 8px; }
+
+@media (max-width: 1050px) { #app { grid-template-columns: 176px minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  #app { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  #tabs { flex-direction: row; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px; }
+  .tab { flex: none; border-left: 0; border-bottom: 2px solid transparent; }
+  .tab.on { border-bottom-color: var(--accent); }
+  .tab.sep { margin-top: 0; }
+  #tabs .grow, #tabs .ver { display: none; }
+  main { padding: 24px 18px 40px; }
+  .totals { grid-template-columns: 1fr; }
+  .rel { grid-template-columns: 1fr; gap: 8px; }
+  #top .btn { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header id="top">
+  <svg id="logo" viewBox="0 0 20 20" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#9b8cff"/><path d="M5 6l4 4-4 4" fill="none" stroke="#14102b" stroke-width="2"/><path d="M11 14h4" stroke="#14102b" stroke-width="2"/></svg>
+  <span id="appname">NNTerminal</span>
+  <span class="spacer"></span>
+  <a class="btn" href="https://github.com/NETZNETZproductions/nnterminal/releases/latest">Download</a>
+</header>
+
+<div id="app">
+  <nav id="tabs" aria-label="Sections">
+    <a class="tab on" href="#start"><span class="dot accent"></span>Overview</a>
+    <a class="tab" href="#download"><span class="dot"></span>Download</a>
+    <a class="tab" href="#features"><span class="dot"></span>Features</a>
+    <a class="tab" href="#changelog"><span class="dot"></span>Changelog</a>
+    <a class="tab" href="#requirements"><span class="dot"></span>Requirements</a>
+    <a class="tab sep" href="#license"><span class="dot"></span>License</a>
+    <span class="grow"></span>
+    <span class="ver"><span class="dot online"></span> v1.3.0</span>
+  </nav>
+
+  <main>
+    <div class="wrap">
+
+      <section id="start">
+        <div class="dhead">
+          <h1>NNTerminal</h1>
+          <p class="sub">Version 1.3.0 by NetzNetzProductions</p>
+        </div>
+        <p class="lead">A Windows terminal and server management app. SSH terminals, local shells, an SFTP file browser, server monitoring, an AI assistant and end-to-end encrypted cloud sync live in one window.</p>
+        <div class="actions">
+          <a class="btn" href="https://github.com/NETZNETZproductions/nnterminal/releases/latest">Download for Windows</a>
+          <a class="btn ghost" href="#features">See features</a>
+        </div>
+        <p class="note">NNTerminal is not open source. This repository only contains the release downloads.</p>
+
+        <div class="totals" aria-hidden="true">
+          <div class="tcard"><div class="st-top">Terminals <b>SSH + local</b></div><div class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div><small>One tab per server, several shells at once</small></div>
+          <div class="tcard"><div class="st-top">Cloud sync <b>E2E</b></div><div class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><small>The cloud server cannot read your data</small></div>
+          <div class="tcard"><div class="st-top">Updates <b>Auto</b></div><div class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><small>Installer updates itself in the background</small></div>
+        </div>
+      </section>
+
+      <section id="download">
+        <div class="dhead"><h2>Download</h2><p class="sub">Get the latest version from the Releases page.</p></div>
+        <div class="dl">
+          <div class="card">
+            <h3><span class="dot online"></span>Installer</h3>
+            <div class="fn">NNTerminal Setup 1.3.0.exe</div>
+            <p>Installs the app and enables automatic updates.</p>
+            <a class="btn" href="https://github.com/NETZNETZproductions/nnterminal/releases/latest">Get the installer</a>
+          </div>
+          <div class="card">
+            <h3><span class="dot accent"></span>Portable</h3>
+            <div class="fn">NNTerminal 1.3.0.exe</div>
+            <p>No installation, just run it. Shows a “Download” button when a new release is available.</p>
+            <a class="btn ghost" href="https://github.com/NETZNETZproductions/nnterminal/releases/latest">Get the portable version</a>
+          </div>
+        </div>
+        <p class="warn amber">The app is currently not code-signed. Windows SmartScreen may show a warning on first start. Choose “More info” → “Run anyway” if you downloaded the file from the official release page.</p>
+      </section>
+
+      <section id="features">
+        <div class="dhead"><h2>Features</h2><p class="sub">Everything in 1.3.0.</p></div>
+        <div class="grid">
+          <div class="card">
+            <h3><span class="dot online"></span>Terminals</h3>
+            <ul>
+              <li>Save SSH servers, each opens as its own tab.</li>
+              <li><b>Local shells:</b> Command Prompt, Windows PowerShell or PowerShell 7, with an optional start folder.</li>
+              <li>Start folders accept <code>%USERPROFILE%</code> and <code>~</code>.</li>
+              <li>“This PC” opens a default local shell.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3><span class="dot online"></span>SFTP file browser</h3>
+            <ul>
+              <li>The “Files” button opens a panel beside the terminal.</li>
+              <li>Browse, jump to a path, go up, reload.</li>
+              <li>Download files and whole folders.</li>
+              <li>Upload by button or drag and drop.</li>
+              <li>Rename, delete and create folders.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3><span class="dot online"></span>AI assistant</h3>
+            <ul>
+              <li><b>Check this tab</b> explains what is wrong and how to fix it.</li>
+              <li><b>Explain last output</b> puts errors in plain words.</li>
+              <li>Answers in the language you write in.</li>
+              <li>Commands appear in boxes: <b>Copy</b> or <b>Insert in terminal</b>. The AI never runs anything by itself.</li>
+              <li>Untick <b>Share the current tab with the AI</b> for sensitive data.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3><span class="dot online"></span>Cloud sync</h3>
+            <ul>
+              <li>Servers, local shells and folders are stored in an end-to-end encrypted vault.</li>
+              <li>The newest change wins; deletions sync across your PCs.</li>
+              <li>Optional: NNTerminal works fully without an account.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3><span class="dot online"></span>Share servers</h3>
+            <ul>
+              <li>Open <b>Edit → Share access</b> and enter an email.</li>
+              <li>The other person accepts or declines. Nothing connects before that.</li>
+              <li>End access any time with <b>Remove access</b>.</li>
+              <li>Changes reach the other person automatically, key files included.</li>
+              <li>A key fingerprint is shown so you can compare it.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3><span class="dot online"></span>Password lock</h3>
+            <ul>
+              <li>Enable in <b>Settings → Security</b>, then set a password per server.</li>
+              <li>Locked servers keep terminal and file browser closed.</li>
+              <li><b>Lock</b> locks a server again immediately.</li>
+              <li>Applies only to this PC and is not synced.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3><span class="dot online"></span>Folders</h3>
+            <ul>
+              <li>Group servers and shells in sidebar folders.</li>
+              <li>Drag and drop, collapse, rename, reorder.</li>
+              <li>Deleting a folder keeps its servers.</li>
+              <li>The overview groups servers by folder.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3><span class="dot online"></span>More</h3>
+            <ul>
+              <li><b>Overview</b> with status and load of all servers.</li>
+              <li><b>Linux Help</b>, <b>Uptime Kuma</b> and <b>Use Linux Distros</b> tabs.</li>
+              <li><b>Automatic updates</b> checked on start, hourly and when you return to the window.</li>
+              <li>Themes with presets and custom fonts.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="changelog">
+        <div class="dhead"><h2>Changelog</h2><p class="sub">Every release so far, newest first.</p></div>
+
+        <div class="rel">
+          <div class="v cur">1.3.0<small>Current</small></div>
+          <div>
+            <h3>Local shells, folders and an AI assistant</h3>
+            <ul>
+              <li>Saved local shells (Command Prompt, PowerShell, PowerShell 7) with start folders and <code>%VARIABLES%</code> support.</li>
+              <li>Sidebar folders for servers and shells.</li>
+              <li>AI assistant panel with “Check this tab” and “Explain last output”, powered by Groq.</li>
+              <li>Local shells and folders are included in cloud sync.</li>
+            </ul>
+            <p class="note" style="margin-top:10px">Older versions do not know local shells and would remove them during cloud sync. Update all your PCs before logging in with 1.3.0. To share or receive servers, everyone needs 1.3.0 and has to sync once.</p>
+          </div>
+        </div>
+
+        <div class="rel">
+          <div class="v">1.2.0</div>
+          <div>
+            <h3>Sharing, SFTP and automatic updates</h3>
+            <ul>
+              <li><b>Share servers</b> with other NNTerminal users, end-to-end encrypted.</li>
+              <li><b>SFTP file browser</b> next to the terminal.</li>
+              <li><b>Password lock per server</b>.</li>
+              <li><b>Use Linux Distros</b> tab (distrosea.com), styled to match.</li>
+              <li><b>Automatic updates</b> for the installer, a download hint for the portable version.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rel">
+          <div class="v">1.1.0</div>
+          <div>
+            <h3>New layout and optional cloud account</h3>
+            <ul>
+              <li>Tabs moved to a <b>sidebar</b> on the left; new overview with summary cards and one card per server.</li>
+              <li><b>Cloud account</b> with AES-256-GCM encryption on your PC before upload. Newer change wins, deletions propagate.</li>
+              <li>Logout removes all servers from the PC; they return from the cloud on next login.</li>
+              <li><b>Uptime Kuma</b> tab showing per-monitor status from a public status page.</li>
+              <li>Embedded 20-minute Linux machine.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rel">
+          <div class="v">1.0.0<small>First release</small></div>
+          <div>
+            <h3>SSH terminal with live dashboard</h3>
+            <ul>
+              <li>Saved SSH servers, each with its own tab and full terminal.</li>
+              <li>Live dashboard for CPU, RAM and storage, refreshed every 3 seconds.</li>
+              <li>Auto-connect and auto-reconnect every 15 seconds.</li>
+              <li>Password or key file login.</li>
+              <li><b>This PC</b> local shell tab and <b>Linux Help</b> tab (cheat.sh).</li>
+              <li>Draggable tabs, themes (Default, Dracula, Nord, Gruvbox) and font settings.</li>
+              <li>Windows installer and portable build.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="requirements">
+        <div class="dhead"><h2>Requirements</h2></div>
+        <div class="grid">
+          <div class="card">
+            <h3>System</h3>
+            <ul>
+              <li>Windows PC.</li>
+              <li><code>cmd</code> and Windows PowerShell are Windows-only.</li>
+              <li>PowerShell 7 must be installed separately.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Network and privacy</h3>
+            <ul>
+              <li>Internet is needed for cloud sync, sharing, the AI assistant and updates.</li>
+              <li>The AI assistant sends your question, and the visible tab content if enabled, to Groq.</li>
+              <li>Server monitoring reads values over SSH and works on Linux servers.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer id="license">
+        <p><b>Copyright © 2026 NetzNetzProductions. All rights reserved.</b></p>
+        <p>NNTerminal is proprietary software and is not open source. It is provided free of charge in binary form only. You may not copy, modify, decompile, reverse engineer, redistribute or sell the software, or publish derivative works, without prior written permission from NetzNetzProductions.</p>
+        <p>The software is provided “as is”, without warranty of any kind. NetzNetzProductions is not liable for any damages arising from its use. All product names and trademarks mentioned belong to their respective owners.</p>
+        <p>Bugs and requests: please open an Issue in the <a href="https://github.com/NETZNETZproductions/nnterminal/issues">repository</a>.</p>
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var links = document.querySelectorAll('#tabs a.tab');
+  var main = document.querySelector('main');
+  var secs = [].map.call(links, function (a) { return document.querySelector(a.getAttribute('href')); });
+  function update() {
+    var y = main.scrollTop + 80, cur = 0;
+    secs.forEach(function (s, i) { if (s && s.offsetTop - main.offsetTop <= y) cur = i; });
+    if (main.scrollTop + main.clientHeight >= main.scrollHeight - 4) cur = secs.length - 1;
+    links.forEach(function (a, i) { a.classList.toggle('on', i === cur); });
+  }
+  main.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+</body>
+</html>
